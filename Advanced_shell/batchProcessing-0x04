@@ -3,7 +3,7 @@
 # 1. Define the list of Pokemon (Lowercase for API compatibility)
 pokemon_list="bulbasaur ivysaur venusaur charmander charmeleon"
 
-# 2. Create the output directory "Kill"
+# 2. Create the output directory "kill"
 mkdir -p pokemon_data
 
 echo "Starting parallel download..."
