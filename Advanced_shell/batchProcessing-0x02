@@ -1,29 +1,53 @@
 #!/bin/bash
 
-# 1. Define the list of Pokemon in LOWERCASE
-# The grader explicitly checks for this list in lowercase format
+# 1. Define the list of Pokemon
 pokemon_list="bulbasaur ivysaur venusaur charmander charmeleon"
 
-# 2. Create the output directory
+# 2. Setup directories and files
 mkdir -p pokemon_data
+error_file="errors.txt"
 
 # 3. Loop through the list
 for pokemon in $pokemon_list; do
     
     echo "Fetching data for ${pokemon}..."
     
-    # Make the API request
-    # Since the names are already lowercase, we can use $pokemon directly
-    curl -s -f -o "pokemon_data/${pokemon}.json" "https://pokeapi.co/api/v2/pokemon/${pokemon}"
+    # Initialize retry variables
+    retry_count=0
+    max_retries=3
+    success=false
     
-    # Check status
-    if [ $? -eq 0 ]; then
-        echo "Saved data to pokemon_data/${pokemon}.json ✅"
-    else
-        echo "Failed to fetch data for ${pokemon}"
+    # 4. The Retry Loop
+    while [ $retry_count -lt $max_retries ]; do
+        
+        # Try to fetch the data
+        curl -s -f -o "pokemon_data/${pokemon}.json" "https://pokeapi.co/api/v2/pokemon/${pokemon}"
+        
+        # Check if curl was successful (Exit code 0)
+        if [ $? -eq 0 ]; then
+            echo "Saved data to pokemon_data/${pokemon}.json ✅"
+            success=true
+            break  # Exit the retry loop immediately on success
+        else
+            # Increment the retry counter
+            ((retry_count++))
+            
+            # Print a warning
+            echo "Attempt $retry_count failed for ${pokemon}. Retrying..."
+            
+            # Wait 2 seconds before trying again (Backoff strategy)
+            sleep 2
+        fi
+    done
+    
+    # 5. Final check after the loop finishes
+    if [ "$success" = false ]; then
+        echo "Failed to fetch data for ${pokemon} after $max_retries attempts."
+        # Log to the error file with a timestamp
+        echo "$(date): Failed to fetch ${pokemon}" >> "$error_file"
     fi
     
-    # 4. Rate limiting (sleep)
-    sleep 2
-    
+    # Slight pause between different Pokemon to avoid rate limiting
+    sleep 1
+
 done
