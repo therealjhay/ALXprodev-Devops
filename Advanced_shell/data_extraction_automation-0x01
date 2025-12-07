@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Ensure the data file exists before trying to read it
+if [ ! -f "data.json" ]; then
+    echo "Error: data.json not found. Please run task 0x00 first."
+    exit 1
+fi
+
+# 1. Use jq to extract the 4 specific fields as a space-separated string
+# Output format: "pikachu electric 60 4"
+jq -r '"\(.name) \(.types[0].type.name) \(.weight) \(.height)"' data.json | \
+
+# 2. Pipe into awk to handle the logic
+awk '{
+    # Capitalize the first letter of Name ($1) and Type ($2)
+    # logic: take 1st char, uppercase it, join with rest of string
+    name = toupper(substr($1,1,1)) substr($1,2);
+    type = toupper(substr($2,1,1)) substr($2,2);
+    
+    # Perform math for units (API uses hectograms and decimeters)
+    weight_kg = $3 / 10;
+    height_m = $4 / 10;
+    
+    # Print the final formatted sentence
+    printf "%s is of type %s, weighs %skg, and is %sm tall.\n", name, type, weight_kg, height_m
+}'
