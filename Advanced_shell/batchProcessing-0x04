@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# 1. Define the list of Pokemon (Lowercase for API compatibility)
+pokemon_list="bulbasaur ivysaur venusaur charmander charmeleon"
+
+# 2. Create the output directory
+mkdir -p pokemon_data
+
+echo "Starting parallel download..."
+
+# 3. Loop through the list
+for pokemon in $pokemon_list; do
+    
+    # We use a subshell ( ... ) & to group commands in the background
+    # This allows us to print a message AND run curl in the same background job
+    (
+        echo "Fetching ${pokemon}..."
+        curl -s -f -o "pokemon_data/${pokemon}.json" "https://pokeapi.co/api/v2/pokemon/${pokemon}"
+        
+        if [ $? -eq 0 ]; then
+            echo "${pokemon} downloaded successfully. ✅"
+        else
+            echo "Failed to fetch ${pokemon}. ❌"
+        fi
+    ) &  # <--- The '&' pushes this entire block to the background immediately
+    
+done
+
+# 4. The Critical Step: Wait
+# The script pauses here until all background jobs defined above are finished
+wait
+
+echo "All background processes complete! Data saved."
