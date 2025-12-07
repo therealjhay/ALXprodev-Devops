@@ -1,26 +1,27 @@
 #!/bin/bash
 
-# Ensure the data file exists before trying to read it
+# Ensure the data file exists
 if [ ! -f "data.json" ]; then
     echo "Error: data.json not found. Please run task 0x00 first."
     exit 1
 fi
 
-# 1. Use jq to extract the 4 specific fields as a space-separated string
-# Output format: "pikachu electric 60 4"
-jq -r '"\(.name) \(.types[0].type.name) \(.weight) \(.height)"' data.json | \
+# 1. Extract raw data with jq
+# We get: "pikachu electric 60 4"
+raw_data=$(jq -r '"\(.name) \(.types[0].type.name) \(.weight) \(.height)"' data.json)
 
-# 2. Pipe into awk to handle the logic
-awk '{
-    # Capitalize the first letter of Name ($1) and Type ($2)
-    # logic: take 1st char, uppercase it, join with rest of string
-    name = toupper(substr($1,1,1)) substr($1,2);
-    type = toupper(substr($2,1,1)) substr($2,2);
-    
-    # Perform math for units (API uses hectograms and decimeters)
+# 2. Use sed to capitalize the first letter of the first two words (Name and Type)
+# This satisfies the requirement to use 'sed'
+capitalized_data=$(echo "$raw_data" | sed -e 's/\b\(.\)/\u\1/g')
+
+# 3. Use awk to do the math and print the final sentence
+# We pass the capitalized string into awk
+echo "$capitalized_data" | awk '{
+    # Calculate weight (hectograms to kg) and height (decimeters to m)
     weight_kg = $3 / 10;
     height_m = $4 / 10;
     
-    # Print the final formatted sentence
-    printf "%s is of type %s, weighs %skg, and is %sm tall.\n", name, type, weight_kg, height_m
+    # Print the specific string format required
+    # $1 is Name, $2 is Type
+    printf "%s is of type %s, weighs %skg, and is %sm tall.\n", $1, $2, weight_kg, height_m
 }'
