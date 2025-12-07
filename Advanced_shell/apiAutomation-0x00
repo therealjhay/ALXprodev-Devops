@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# 1. Define Variables
+POKEMON="pikachu"
+API_URL="https://pokeapi.co/api/v2/pokemon/${POKEMON}"
+OUTPUT_FILE="data.json"
+ERROR_FILE="errors.txt"
+
+# 2. Make the API Request
+# curl flags used:
+# -s : Silent mode (hides the progress bar/speed meter)
+# -f : Fail on HTTP errors (404, 500, etc.) without outputting garbage
+# -o : Output the results to a specific file
+
+if curl -s -f -o "$OUTPUT_FILE" "$API_URL"; then
+    # 3. Success Block
+    echo "Success: Data for ${POKEMON} saved to ${OUTPUT_FILE}"
+else
+    # 4. Error Block
+    # Log a timestamped error message to the error file
+    echo "$(date): Failed to retrieve data for ${POKEMON}" >> "$ERROR_FILE"
+    echo "Request failed. Error logged to ${ERROR_FILE}"
+fi
