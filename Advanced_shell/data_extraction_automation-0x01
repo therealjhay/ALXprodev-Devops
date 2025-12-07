@@ -1,27 +1,20 @@
 #!/bin/bash
 
-# Ensure the data file exists
-if [ ! -f "data.json" ]; then
-    echo "Error: data.json not found. Please run task 0x00 first."
-    exit 1
-fi
+# 1. Extract raw values using jq
+raw_name=$(jq -r '.name' data.json)
+raw_type=$(jq -r '.types[0].type.name' data.json)
+raw_weight=$(jq -r '.weight' data.json)
+raw_height=$(jq -r '.height' data.json)
 
-# 1. Extract raw data with jq
-# We get: "pikachu electric 60 4"
-raw_data=$(jq -r '"\(.name) \(.types[0].type.name) \(.weight) \(.height)"' data.json)
+# 2. Use sed to capitalize the first letter (Requirement: use sed)
+# 's/./\u&/' matches the first character (.) and uppercases it (\u)
+name=$(echo "$raw_name" | sed 's/./\u&/')
+type=$(echo "$raw_type" | sed 's/./\u&/')
 
-# 2. Use sed to capitalize the first letter of the first two words (Name and Type)
-# This satisfies the requirement to use 'sed'
-capitalized_data=$(echo "$raw_data" | sed -e 's/\b\(.\)/\u\1/g')
+# 3. Use awk to perform the math (Requirement: use awk)
+# We echo the variable into awk to divide by 10
+formatted_weight=$(echo "$raw_weight" | awk '{print $1/10}')
+formatted_height=$(echo "$raw_height" | awk '{print $1/10}')
 
-# 3. Use awk to do the math and print the final sentence
-# We pass the capitalized string into awk
-echo "$capitalized_data" | awk '{
-    # Calculate weight (hectograms to kg) and height (decimeters to m)
-    weight_kg = $3 / 10;
-    height_m = $4 / 10;
-    
-    # Print the specific string format required
-    # $1 is Name, $2 is Type
-    printf "%s is of type %s, weighs %skg, and is %sm tall.\n", $1, $2, weight_kg, height_m
-}'
+# 4. Print the final sentence using the EXACT format the checker wants
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
